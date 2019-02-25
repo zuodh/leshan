@@ -34,6 +34,7 @@ import org.eclipse.leshan.core.californium.EndpointFactory;
 import org.eclipse.leshan.core.californium.Lwm2mEndpointContextMatcher;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
+import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.server.bootstrap.BootstrapSessionManager;
 import org.eclipse.leshan.server.bootstrap.BootstrapStore;
 import org.eclipse.leshan.server.bootstrap.LwM2mBootstrapServer;
@@ -254,7 +255,7 @@ public class LeshanBootstrapServerBuilder {
         if (sessionManager == null)
             sessionManager = new DefaultBootstrapSessionManager(securityStore);
         if (model == null)
-            model = new LwM2mModel(ObjectLoader.loadDefault());
+            model = new StaticModel(ObjectLoader.loadDefault());
         if (coapConfig == null) {
             coapConfig = createDefaultNetworkConfig();
         }

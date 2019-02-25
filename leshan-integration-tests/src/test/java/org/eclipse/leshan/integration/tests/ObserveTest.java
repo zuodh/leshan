@@ -41,7 +41,7 @@ import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.californium.elements.RawData;
 import org.eclipse.leshan.ResponseCode;
 import org.eclipse.leshan.client.californium.LeshanClient;
-import org.eclipse.leshan.core.model.LwM2mModel;
+import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.LwM2mObject;
 import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
@@ -217,7 +217,7 @@ public class ObserveTest {
 
         // *** HACK send a notification with unsupported content format *** //
         byte[] payload = LwM2mNodeJsonEncoder.encode(LwM2mSingleResource.newStringResource(15, "Paris"),
-                new LwM2mPath("/3/0/15"), new LwM2mModel(helper.createObjectModels()),
+                new LwM2mPath("/3/0/15"), new StaticModel(helper.createObjectModels()),
                 new DefaultLwM2mValueConverter());
         Response firstCoapResponse = (Response) observeResponse.getCoapResponse();
         sendNotification(getConnector(helper.client), payload, firstCoapResponse, 666); // 666 is not a supported //
@@ -260,7 +260,7 @@ public class ObserveTest {
         timestampedNodes.add(new TimestampedLwM2mNode(mostRecentNode.getTimestamp() - 2,
                 LwM2mSingleResource.newStringResource(15, "Londres")));
         byte[] payload = LwM2mNodeJsonEncoder.encodeTimestampedData(timestampedNodes, new LwM2mPath("/3/0/15"),
-                new LwM2mModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
+                new StaticModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
         Response firstCoapResponse = (Response) observeResponse.getCoapResponse();
         sendNotification(getConnector(helper.client), payload, firstCoapResponse, ContentFormat.JSON_CODE);
         // *** Hack End *** //
@@ -303,7 +303,7 @@ public class ObserveTest {
         timestampedNodes.add(new TimestampedLwM2mNode(mostRecentNode.getTimestamp() - 2,
                 new LwM2mObjectInstance(0, LwM2mSingleResource.newStringResource(15, "Londres"))));
         byte[] payload = LwM2mNodeJsonEncoder.encodeTimestampedData(timestampedNodes, new LwM2mPath("/3/0"),
-                new LwM2mModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
+                new StaticModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
         Response firstCoapResponse = (Response) observeResponse.getCoapResponse();
         sendNotification(getConnector(helper.client), payload, firstCoapResponse, ContentFormat.JSON_CODE);
         // *** Hack End *** //
@@ -346,7 +346,7 @@ public class ObserveTest {
         timestampedNodes.add(new TimestampedLwM2mNode(mostRecentNode.getTimestamp() - 2,
                 new LwM2mObject(3, new LwM2mObjectInstance(0, LwM2mSingleResource.newStringResource(15, "Londres")))));
         byte[] payload = LwM2mNodeJsonEncoder.encodeTimestampedData(timestampedNodes, new LwM2mPath("/3"),
-                new LwM2mModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
+                new StaticModel(helper.createObjectModels()), new DefaultLwM2mValueConverter());
 
         Response firstCoapResponse = (Response) observeResponse.getCoapResponse();
         sendNotification(getConnector(helper.client), payload, firstCoapResponse, ContentFormat.JSON_CODE);
