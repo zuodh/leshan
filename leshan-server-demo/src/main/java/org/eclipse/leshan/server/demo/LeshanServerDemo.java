@@ -68,7 +68,7 @@ import org.eclipse.leshan.server.demo.servlet.ObjectSpecServlet;
 import org.eclipse.leshan.server.demo.servlet.SecurityServlet;
 import org.eclipse.leshan.server.impl.FileSecurityStore;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
-import org.eclipse.leshan.server.model.StaticModelProvider;
+import org.eclipse.leshan.server.model.VersionedModelProvider;
 import org.eclipse.leshan.server.security.EditableSecurityStore;
 import org.eclipse.leshan.util.SecurityUtil;
 import org.slf4j.Logger;
@@ -360,7 +360,7 @@ public class LeshanServerDemo {
         if (modelsFolderPath != null) {
             models.addAll(ObjectLoader.loadObjectsFromDir(new File(modelsFolderPath)));
         }
-        LwM2mModelProvider modelProvider = new StaticModelProvider(models);
+        LwM2mModelProvider modelProvider = new VersionedModelProvider(models);
         builder.setObjectModelProvider(modelProvider);
 
         // Set securityStore & registrationStore
@@ -403,7 +403,8 @@ public class LeshanServerDemo {
         ServletHolder securityServletHolder = new ServletHolder(new SecurityServlet(securityStore, serverCertificate));
         root.addServlet(securityServletHolder, "/api/security/*");
 
-        ServletHolder objectSpecServletHolder = new ServletHolder(new ObjectSpecServlet(lwServer.getModelProvider()));
+        ServletHolder objectSpecServletHolder = new ServletHolder(
+                new ObjectSpecServlet(lwServer.getModelProvider(), lwServer.getRegistrationService()));
         root.addServlet(objectSpecServletHolder, "/api/objectspecs/*");
 
         // Register a service to DNS-SD
