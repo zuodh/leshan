@@ -25,8 +25,13 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.leshan.Link;
+import org.eclipse.leshan.core.attributes.Attribute;
+import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.request.BindingMode;
 import org.eclipse.leshan.core.request.Identity;
 import org.eclipse.leshan.util.StringUtils;
@@ -69,6 +74,10 @@ public class Registration implements Serializable {
 
     private final Link[] objectLinks;
 
+    // Lazy Loaded map of supported object (object id => version)
+    // built from objectLinks
+    private final AtomicReference<Map<Integer, String>> supportedObjects;
+
     private final Map<String, String> additionalRegistrationAttributes;
 
     /** The location where LWM2M objects are hosted on the device */
@@ -94,7 +103,7 @@ public class Registration implements Serializable {
         this.registrationEndpointAddress = registrationEndpointAddress;
 
         this.objectLinks = objectLinks;
-        // extract the root objects path from the object links
+        // Parse object link to extract root path.
         String rootPath = "/";
         if (objectLinks != null) {
             for (Link link : objectLinks) {
@@ -104,7 +113,10 @@ public class Registration implements Serializable {
                 }
             }
         }
+        if (!rootPath.endsWith("/"))
+            rootPath = rootPath + "/";
         this.rootPath = rootPath;
+        this.supportedObjects = new AtomicReference<Map<Integer, String>>();
 
         this.lifeTimeInSec = lifetimeInSec == null ? DEFAULT_LIFETIME_IN_SEC : lifetimeInSec;
         this.lwM2mVersion = lwM2mVersion == null ? DEFAULT_LWM2M_VERSION : lwM2mVersion;
@@ -305,6 +317,52 @@ public class Registration implements Serializable {
         return bindingMode.equals(BindingMode.UQ) || bindingMode.equals(BindingMode.UQS);
     }
 
+    /**
+     * @return a map from {@code objectId} => {@code supportedVersion} for each supported objects. supported.
+     */
+    public Map<Integer, String> getSupportedObject() {
+        Map<Integer, String> objects = supportedObjects.get();
+        if (objects != null)
+            return objects;
+
+        // Lazy loading
+        objects = new HashMap<>();
+        for (Link link : objectLinks) {
+            if (link != null) {
+                Pattern p = Pattern.compile("^" + rootPath + "(\\d+)(?:/\\d+)*$");
+                Matcher m = p.matcher(link.getUrl());
+                if (m.matches()) {
+                    try {
+                        // extract object id and version
+                        int objectId = Integer.parseInt(m.group(1));
+                        Object version = link.getAttributes().get(Attribute.OBJECT_VERSION);
+                        String currentVersion = objects.get(objectId);
+
+                        // store it in map
+                        if (currentVersion == null) {
+                            // we never find version for this object add it
+                            if (version instanceof String) {
+                                objects.put(objectId, (String) version);
+                            } else {
+                                objects.put(objectId, ObjectModel.DEFAULT_VERSION);
+                            }
+                        } else {
+                            // if version is already set, we override it only if new version is not DEFAULT_VERSION
+                            if (version instanceof String && !version.equals(ObjectModel.DEFAULT_VERSION)) {
+                                objects.put(objectId, (String) version);
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        // This should not happened except maybe if the number in url is too long...
+                        // In this case we just ignore it because this is not an object id.
+                    }
+                }
+            }
+        }
+        supportedObjects.compareAndSet(null, Collections.unmodifiableMap(objects));
+        return supportedObjects.get();
+    }
+
     @Override
     public String toString() {
         return String.format(
@@ -416,5 +474,4 @@ public class Registration implements Serializable {
         }
 
     }
-
 }
